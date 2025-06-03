@@ -83,7 +83,7 @@ class CustomAdminManager(models.Manager):
         return admin
 
 
-class CustomAdmin(models.Model):
+class CustomAdmin(BaseModel):
     """
     Custom admin model
     """
@@ -107,3 +107,7 @@ class CustomAdmin(models.Model):
         if not self.password.startswith('pbkdf2_'):
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
+
+    def update_last_login(self):
+        self.last_login = timezone.now()
+        self.save(update_fields=['last_login'])

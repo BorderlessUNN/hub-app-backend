@@ -8,6 +8,7 @@ class BaseModel(models.Model):
         "accounts.CustomUser",
         on_delete=models.DO_NOTHING,
         null=True,
+        blank=True,
         # Use unique related name for created_by
         related_name="created_%(class)s_set",
     )
@@ -15,6 +16,7 @@ class BaseModel(models.Model):
         "accounts.CustomUser",
         on_delete=models.DO_NOTHING,
         null=True,
+        blank=True,
         # Use unique related name for last_updated_by
         related_name="updated_%(class)s_set",
     )
