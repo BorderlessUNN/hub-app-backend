@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from django.db import transaction
+from django.contrib.auth.hashers import make_password
+from django.core.exceptions import ValidationError
 
 from helpers.models import BaseModel
 
@@ -23,6 +25,7 @@ class CustomUser(BaseModel):
     date_of_birth = models.DateField(blank=True, null=True)
     last_checkin = models.DateField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
+    is_member = models.BooleanField(default=False)
   
     def delete(self, *args, **kwargs):
         """
@@ -59,3 +62,48 @@ class CustomUser(BaseModel):
         Meta class for ordering the user objects by their IDs in descending order.
         """
         ordering = ["-id"]
+
+
+class CustomAdminManager(models.Manager):
+    def create_admin(self, admin_name, email, password, **extra_fields):
+        if self.model.objects.count() >= 2:
+            raise ValidationError("Maximum number of admins (2) already exists.")
+
+        email = email.lower()
+        password = make_password(password)
+
+        admin = self.model(
+            admin_name=admin_name,
+            email=email,
+            password=password,
+            **extra_fields
+        )
+        admin.full_clean()
+        admin.save(using=self._db)
+        return admin
+
+
+class CustomAdmin(models.Model):
+    """
+    Custom admin model
+    """
+    admin_name = models.CharField(max_length=100)
+    email = models.EmailField(
+        unique=True,
+        error_messages={
+            "unique": "An admin with this email already exists."
+        }
+    )
+    password = models.CharField(max_length=128, verbose_name='password')
+    last_login = models.DateTimeField(blank=True, null=True, verbose_name='last login')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = CustomAdminManager()
+
+    def save(self, *args, **kwargs):
+        self.email = str(self.email).lower()
+
+        # Hash the password if it's not already hashed
+        if not self.password.startswith('pbkdf2_'):
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
