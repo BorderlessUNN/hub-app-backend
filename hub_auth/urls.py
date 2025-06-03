@@ -14,9 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
+from django.urls import path, include
 from hub_auth.views import HomeView
 
+api_version_prefix = 'api/v1/'
+
 urlpatterns = [
-    path('', HomeView.as_view(), name='home'),
+    path(api_version_prefix + '', HomeView.as_view(), name='home'),
+    path(api_version_prefix + 'admin/', include('accounts.urls.admin_urls')),
 ]
