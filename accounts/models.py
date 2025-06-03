@@ -1,5 +1,3 @@
-from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import AbstractUser, UserManager, Group, Permission
 from django.db import models
 from django.utils import timezone
 from django.db import transaction
@@ -7,53 +5,12 @@ from django.db import transaction
 from helpers.models import BaseModel
 
 
-class CustomUserManager(UserManager):
+class CustomUser(BaseModel):
     """
-    Custom user manager that extends Django's built-in UserManager.
+    Custom user model
     """
+    # Exclude unnecessary fields from the abstract user model    
 
-    def _create_user(self, email, password, **extra_fields):
-        """
-        Creates and saves a User with the given email and password.
-        """
-        email = self.normalize_email(email)
-        user = CustomUser(email=email, **extra_fields)
-        user.password = make_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, email, password=None, **extra_fields):
-        """
-        Creates and saves a regular User with the given email and password.
-        """
-        extra_fields.setdefault("is_active", True)
-        return self._create_user(email, password, **extra_fields)
-
-
-class CustomUser(AbstractUser, BaseModel):
-    """
-    Custom user model that extends Django's built-in AbstractUser.
-
-    """
-    # Exclude unnecessary fields from the abstract user model
-    username = None
-    first_name = None
-    last_name = None
-    is_staff = None
-    date_joined = None
-    last_login = None
-    is_superuser = None
-    
-    groups = models.ManyToManyField(
-        Group,
-        related_name='customuser_groups',  # Specify a custom related_name
-        blank=True
-    )
-    user_permissions = models.ManyToManyField(
-        Permission,
-        related_name='customuser_permissions',  # Specify a custom related_name
-        blank=True
-    )
     user_name = models.CharField(max_length=100)
     email = models.EmailField(
         unique=True,
@@ -66,11 +23,7 @@ class CustomUser(AbstractUser, BaseModel):
     date_of_birth = models.DateField(blank=True, null=True)
     last_checkin = models.DateField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
-
-    USERNAME_FIELD = 'email'  # Use email as the field for authentication
-    REQUIRED_FIELDS = ['email']
-    objects = CustomUserManager()
-    
+  
     def delete(self, *args, **kwargs):
         """
         Soft deletes the user and modifies the email for reference.
