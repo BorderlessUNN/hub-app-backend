@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     
-    'accounts.apps.AccountsConfig'
+    'accounts.apps.AccountsConfig',
+    'checkin.apps.CheckinConfig',
+
 ]
 
 MIDDLEWARE = [
