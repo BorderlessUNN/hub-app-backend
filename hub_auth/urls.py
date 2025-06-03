@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.urls import path
 from hub_auth.views import HomeView
+from checkin.views import UserCheckInView
+
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
+    path('checkin/', UserCheckInView.as_view(), name='user_checkin')
 ]
