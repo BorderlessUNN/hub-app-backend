@@ -2,13 +2,14 @@ from rest_framework.exceptions import APIException
 
 
 class CustomValidationException(APIException):
-    default_detail = "You do not have the required permissions to complete the action you have requested for."
+    default_msg = "You do not have the required permissions to complete the action you have requested for."
 
-    def __init__(self, detail=None, code=None):
-        if detail is not None:
-            self.detail = detail
+    def __init__(self, msg=None, code=None):
+        if msg is not None:
+            self.msg = msg
         else:
-            self.detail = self.default_detail
+            self.msg = self.default_msg
+        self.detail = {'msg': self.msg}
 
         if code is None:
             self.status_code = 400
