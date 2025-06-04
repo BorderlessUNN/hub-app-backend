@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'drf_spectacular',
     
     'accounts.apps.AccountsConfig'
 ]
@@ -137,4 +138,28 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'helpers.api_key.APIKeyAuthentication',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BTC UNN HUB AUTH API',
+    'DESCRIPTION': 'API backend for Borderless Tech Clubs(UNN) chapter',
+    'VERSION': '1.0.0',
+
+    # TODO: Fill below with the correct info
+    'TOS': 'https://example.com/terms/',
+    'CONTACT': {
+        'name': 'BTC UNN DEV',
+        'email': 'support@example.com',
+        'url': 'https://example.com/support/',
+    },
+    'LICENSE': {
+        'name': 'MIT License',
+        'url': 'https://opensource.org/licenses/MIT',
+    },
+
+    # Optional settings
+    'SERVE_INCLUDE_SCHEMA': False,  # don’t include schema in Swagger JSON itself
+    'SCHEMA_PATH_PREFIX': '/api/v1/',  # trims URLs for cleaner docs
+}
+
