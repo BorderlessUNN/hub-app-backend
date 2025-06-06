@@ -1,7 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema_view, extend_schema
 
 
+@extend_schema_view(
+    get=extend_schema(exclude=True),
+)
 class HomeView(APIView):
     def get(self, request):
         """
