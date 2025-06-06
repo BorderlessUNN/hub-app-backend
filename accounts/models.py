@@ -35,7 +35,6 @@ class CustomUser(BaseModel):
             self.email = f"del_{self.id}: {self.email}"
             self.is_active = False
             self.save()
-            super().delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         self.user_name = str(self.user_name).title()
