@@ -4,7 +4,7 @@ from django.utils import timezone
 from accounts.models import CustomUser 
 from .serializers import CheckInSerializer
 
-class CheckInView(APIView):
+class UserCheckInView(APIView):
     def post(self, request):
         serializer = CheckInSerializer(data=request.data)
         if serializer.is_valid():
