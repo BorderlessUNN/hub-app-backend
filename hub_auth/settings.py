@@ -29,6 +29,7 @@ SECRET_KEY = 'django-insecure-c=aoj2fyuj**f95hl21i9#l8%gj$mc2e4$m55u+n$s4w*c=nis
 DEBUG = True
 
 ALLOWED_HOSTS = []
+APPEND_SLASH = False
 
 
 # Application definition
@@ -139,6 +140,7 @@ REST_FRAMEWORK = {
         'helpers.api_key.APIKeyAuthentication',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'URL_TRAILING_SLASH': False,
 }
 
 SPECTACULAR_SETTINGS = {
