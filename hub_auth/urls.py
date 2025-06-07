@@ -42,5 +42,6 @@ urlpatterns = [
     ),
     path(api_version_prefix + '', HomeView.as_view(), name='home'),
     path(api_version_prefix + 'admin/', include('accounts.urls.admin_urls')),
+    path(api_version_prefix + 'member/', include('accounts.urls.member_urls')),
     path(api_version_prefix + 'checkin/', include('checkin.urls')),
 ]

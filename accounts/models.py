@@ -7,12 +7,10 @@ from django.core.exceptions import ValidationError
 from helpers.models import BaseModel
 
 
-class CustomUser(BaseModel):
+class CustomMember(BaseModel):
     """
-    Custom user model
+    Custom member model
     """
-    # Exclude unnecessary fields from the abstract user model    
-
     user_name = models.CharField(max_length=100)
     email = models.EmailField(
         unique=True,
@@ -25,7 +23,7 @@ class CustomUser(BaseModel):
     date_of_birth = models.DateField(blank=True, null=True)
     last_checkin = models.DateField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
-    is_member = models.BooleanField(default=False)
+    is_member = models.BooleanField(default=True)
   
     def delete(self, *args, **kwargs):
         """

@@ -1,7 +1,7 @@
 from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
 
-from accounts.models import CustomAdmin
+from accounts.models import CustomAdmin, CustomMember
 from helpers.exceptions import CustomValidationException
 
 
@@ -33,3 +33,28 @@ class AdminLoginSerializer(serializers.Serializer):
             'email': admin.email,
             'id': admin.id,
         }
+
+
+class CustomMemberCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomMember
+        fields = [
+            'user_name',
+            'email',
+            'department',
+            'whatsapp_number',
+            'date_of_birth',
+            'tech_stack',
+        ]
+
+    def validate_email(self, value):
+        if CustomMember.objects.filter(email__iexact=value).exists():
+            raise CustomValidationException("A user with this email already exists.")
+        return value
+
+    def create(self, validated_data):
+        # Ensure name is capitalized and email is lowercase
+        validated_data['user_name'] = validated_data.get('user_name', '').title()
+        validated_data['email'] = validated_data.get('email', '').lower()
+        return super().create(validated_data)
+
