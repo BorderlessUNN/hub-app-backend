@@ -2,6 +2,7 @@ from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
 
 from accounts.models import CustomAdmin, CustomMember
+from accounts.utils import get_auth_tokens_for_admin
 from helpers.exceptions import CustomValidationException
 
 
@@ -32,6 +33,7 @@ class AdminLoginSerializer(serializers.Serializer):
             'name': admin.admin_name,
             'email': admin.email,
             'id': admin.id,
+            'tokens': get_auth_tokens_for_admin(admin)
         }
 
 
