@@ -2,6 +2,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from helpers.responses import CustomResponse
 from checkin.serializers import MemberCheckInSerializer
+from accounts.permissions import IsAdminUser
+
 
 class MemberCheckInView(APIView):
     """
@@ -9,6 +11,7 @@ class MemberCheckInView(APIView):
     """
 
     serializer_class = MemberCheckInSerializer
+    permission_classes = [IsAdminUser]
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
