@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework import status
 
 from helpers.responses import CustomResponse
+from accounts.permissions import IsAdminUser
 from accounts.serializers import AdminLoginSerializer, CustomMemberCreateSerializer, AccessTokenSerializer
 
 
@@ -45,6 +46,7 @@ class CreateMemberView(APIView):
     API View for creating a new member.
     """
     serializer_class = CustomMemberCreateSerializer
+    permission_classes = [IsAdminUser]
     
     def post(self, request):
         serializer = self.serializer_class(data=request.data)

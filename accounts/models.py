@@ -3,6 +3,7 @@ from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractBaseUser
 
 from helpers.models import BaseModel
 
@@ -80,7 +81,7 @@ class CustomAdminManager(models.Manager):
         return admin
 
 
-class CustomAdmin(BaseModel):
+class CustomAdmin(BaseModel, AbstractBaseUser):
     """
     Custom admin model
     """
@@ -96,6 +97,9 @@ class CustomAdmin(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = CustomAdminManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['admin_name']
 
     def save(self, *args, **kwargs):
         self.email = str(self.email).lower()
