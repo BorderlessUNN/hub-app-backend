@@ -2,7 +2,7 @@ from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
 
 from accounts.models import CustomAdmin, CustomMember
-from accounts.utils import get_auth_tokens_for_admin
+from accounts.tokens import get_auth_tokens_for_admin, get_access_token_from_refresh_token
 from helpers.exceptions import CustomValidationException
 
 
@@ -35,6 +35,17 @@ class AdminLoginSerializer(serializers.Serializer):
             'id': admin.id,
             'tokens': get_auth_tokens_for_admin(admin)
         }
+    
+
+class AccessTokenSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
+
+    def validate(self, attrs):
+        refresh_token = attrs.get('refresh_token')
+        return {
+            'access_token': get_access_token_from_refresh_token(refresh_token)
+        }
+
 
 
 class CustomMemberCreateSerializer(serializers.ModelSerializer):
