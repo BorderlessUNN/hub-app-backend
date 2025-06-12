@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.models import CustomMember
+from accounts.models import CustomUser
 from helpers.exceptions import CustomValidationException
 from django.utils import timezone
 
@@ -10,8 +10,8 @@ class MemberCheckInSerializer(serializers.Serializer):
         email = attrs.get('email')
         email = email.lower()
         try:
-            self.member = CustomMember.objects.get(email=email)
-        except CustomMember.DoesNotExist:
+            self.member = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
             raise CustomValidationException(
                     msg="No member found with this email",
                     code=404
