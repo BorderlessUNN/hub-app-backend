@@ -15,3 +15,4 @@ class HomeView(APIView):
         Custom classes for response and error handlilng will be introduced as we progress
         """
         return Response({'message': 'Hello World!'})
+    

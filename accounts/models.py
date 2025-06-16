@@ -3,27 +3,23 @@ from django.utils import timezone
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth.models import AbstractBaseUser
 
 from helpers.models import BaseModel
 
 
-class CustomMember(BaseModel):
+class CustomUser(BaseModel):
     """
     Custom member model
     """
     user_name = models.CharField(max_length=100)
-    email = models.EmailField(
-        unique=True,
-        error_messages={
-            "unique": "A user with this email already exists."
-        }
-    )
+    email = models.EmailField(unique=True)
     department = models.CharField(max_length=200)
     whatsapp_number = models.CharField(max_length=15)
     date_of_birth = models.DateField(blank=True, null=True)
     last_checkin = models.DateField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
-    is_member = models.BooleanField(default=True)
+    is_member = models.BooleanField(default=False)
   
     def delete(self, *args, **kwargs):
         """
@@ -80,7 +76,7 @@ class CustomAdminManager(models.Manager):
         return admin
 
 
-class CustomAdmin(BaseModel):
+class CustomAdmin(BaseModel, AbstractBaseUser):
     """
     Custom admin model
     """
@@ -96,6 +92,9 @@ class CustomAdmin(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True)
 
     objects = CustomAdminManager()
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['admin_name']
 
     def save(self, *args, **kwargs):
         self.email = str(self.email).lower()

@@ -9,7 +9,7 @@ class CustomValidationException(APIException):
             self.msg = msg
         else:
             self.msg = self.default_msg
-        self.detail = {'msg': self.msg}
+        self.detail = {'msg': self.msg, 'status': False}
 
         if code is None:
             self.status_code = 400

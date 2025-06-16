@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
 import environ, os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,8 +43,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
+    'rest_framework_simplejwt',
     
-    'accounts.apps.AccountsConfig'
+    'accounts.apps.AccountsConfig',
+    'checkin.apps.CheckinConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -109,6 +113,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTH_USER_MODEL = 'accounts.CustomAdmin'
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -136,9 +142,16 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 API_KEY = env("API_KEY")
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        # The order matters. Api key auth comes first then user auth
         'helpers.api_key.APIKeyAuthentication',
+        'accounts.auth.CustomAdminAuthentication',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
 SPECTACULAR_SETTINGS = {

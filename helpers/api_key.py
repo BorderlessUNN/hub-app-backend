@@ -15,4 +15,4 @@ class APIKeyAuthentication(BaseAuthentication):
         if api_key != expected_key:
             raise CustomValidationException(msg='Invalid API key.')
 
-        return (None, None)
+        return None # Returning None will allow other authentication classes to run

@@ -1,7 +1,8 @@
 from django.contrib.auth.hashers import check_password
 from rest_framework import serializers
 
-from accounts.models import CustomAdmin, CustomMember
+from accounts.models import CustomAdmin, CustomUser
+from accounts.tokens import get_auth_tokens_for_admin, get_access_token_from_refresh_token
 from helpers.exceptions import CustomValidationException
 
 
@@ -32,12 +33,29 @@ class AdminLoginSerializer(serializers.Serializer):
             'name': admin.admin_name,
             'email': admin.email,
             'id': admin.id,
+            'tokens': get_auth_tokens_for_admin(admin)
+        }
+    
+
+class AccessTokenSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
+
+    def validate(self, attrs):
+        refresh_token = attrs.get('refresh_token')
+        return {
+            'access_token': get_access_token_from_refresh_token(refresh_token)
         }
 
 
+
 class CustomMemberCreateSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(
+        required=True,
+        validators=[]
+    )
+    
     class Meta:
-        model = CustomMember
+        model = CustomUser
         fields = [
             'user_name',
             'email',
@@ -46,15 +64,49 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
             'date_of_birth',
             'tech_stack',
         ]
+        extra_kwargs = {
+            'user_name': {'required': True},
+            'email': {'required': True},
+            'department': {'required': True},
+            'whatsapp_number': {'required': True},
+            'date_of_birth': {'required': True},
+            'tech_stack': {'required': True},
+        }
 
     def validate_email(self, value):
-        if CustomMember.objects.filter(email__iexact=value).exists():
-            raise CustomValidationException("A user with this email already exists.")
+        # Only raise error if a *member* with the email exists
+        if CustomUser.objects.filter(email__iexact=value, is_member=True).exists():
+            raise CustomValidationException("A member with this email already exists.")
         return value
 
-    def create(self, validated_data):
-        # Ensure name is capitalized and email is lowercase
-        validated_data['user_name'] = validated_data.get('user_name', '').title()
-        validated_data['email'] = validated_data.get('email', '').lower()
-        return super().create(validated_data)
+    def validate(self, attrs):
+        attrs['email'] = attrs['email'].lower()
+        attrs['user_name'] = attrs['user_name'].title()
+        return attrs
 
+    def create(self, validated_data):
+        """
+        If a user with the email exists, update their data and mark as member.
+        If not, create a new member.
+        """
+        email = validated_data['email']
+        user, created = CustomUser.objects.get_or_create(email=email, defaults={
+            'user_name': validated_data['user_name'],
+            'department': validated_data['department'],
+            'whatsapp_number': validated_data['whatsapp_number'],
+            'date_of_birth': validated_data['date_of_birth'],
+            'tech_stack': validated_data['tech_stack'],
+            'is_member': True
+        })
+
+        if not created:
+            # Update existing user fields
+            user.user_name = validated_data['user_name']
+            user.department = validated_data['department']
+            user.whatsapp_number = validated_data['whatsapp_number']
+            user.date_of_birth = validated_data['date_of_birth']
+            user.tech_stack = validated_data['tech_stack']
+            user.is_member = True
+            user.save()
+
+        return user
