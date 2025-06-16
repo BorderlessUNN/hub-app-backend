@@ -10,7 +10,7 @@ class MemberCheckInSerializer(serializers.Serializer):
         email = attrs.get('email')
         email = email.lower()
         try:
-            self.member = CustomUser.objects.get(email=email)
+            self.member = CustomUser.objects.get(email=email, is_member=True)
         except CustomUser.DoesNotExist:
             raise CustomValidationException(
                     msg="No member found with this email",
