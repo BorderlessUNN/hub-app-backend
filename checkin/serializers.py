@@ -46,6 +46,13 @@ class GuestCheckInSerializer(serializers.Serializer):
     def validate(self, attrs):
         email = attrs.get('email').lower()
         attrs['email'] = email
+
+        if CustomUser.objects.filter(email=email, is_member=True).exists():
+            raise CustomValidationException(
+                msg="This email is already registered as a member. Use the member check-in instead.",
+                code=400
+            )
+        
         self.attrs = attrs
         return attrs
 
