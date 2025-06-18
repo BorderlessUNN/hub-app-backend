@@ -8,23 +8,18 @@ from django.contrib.auth.models import AbstractBaseUser
 from helpers.models import BaseModel
 
 
-class CustomMember(BaseModel):
+class CustomUser(BaseModel):
     """
     Custom member model
     """
     user_name = models.CharField(max_length=100)
-    email = models.EmailField(
-        unique=True,
-        error_messages={
-            "unique": "A user with this email already exists."
-        }
-    )
+    email = models.EmailField(unique=True)
     department = models.CharField(max_length=200)
     whatsapp_number = models.CharField(max_length=15)
     date_of_birth = models.DateField(blank=True, null=True)
     last_checkin = models.DateField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
-    is_member = models.BooleanField(default=True)
+    is_member = models.BooleanField(default=False)
   
     def delete(self, *args, **kwargs):
         """
