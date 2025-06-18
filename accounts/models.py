@@ -17,7 +17,7 @@ class CustomUser(BaseModel):
     department = models.CharField(max_length=200)
     whatsapp_number = models.CharField(max_length=15)
     date_of_birth = models.DateField(blank=True, null=True)
-    last_checkin = models.DateField(blank=True, null=True)
+    last_checkin = models.DateTimeField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
     is_member = models.BooleanField(default=False)
   
