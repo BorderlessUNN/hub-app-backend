@@ -30,7 +30,7 @@ class GuestCheckInView(APIView):
     def post(self, request):
         serializer = GuestCheckInSerializer(data=request.data)
         if serializer.is_valid():
-            guest = serializer.save()
+            serializer.save()
             return CustomResponse(
             valid=True,
             status=status.HTTP_200_OK,
