@@ -5,6 +5,7 @@ from helpers.models import BaseModel
 
 class Seat(BaseModel):
     seat_number = models.IntegerField(unique=True, null=False)
+    is_booked = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['seat_number']

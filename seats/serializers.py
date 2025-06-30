@@ -1,5 +1,6 @@
-from drf_spectacular.utils import extend_schema_field
+from django.utils import timezone
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 from helpers.exceptions import CustomValidationException
 from accounts.models import CustomUser 
@@ -15,7 +16,7 @@ class SeatStateSerializer(serializers.ModelSerializer):
     
     @extend_schema_field(serializers.BooleanField)
     def get_is_taken(self, obj):
-        return SeatBookings.objects.filter(seat=obj, is_active=True).exists()
+        return obj.is_booked
     
 
 class BookSeatSerializer(serializers.Serializer):
@@ -30,24 +31,46 @@ class BookSeatSerializer(serializers.Serializer):
         user_id = attrs.get('user_id')
 
         try:
-            seat = Seat.objects.get(id=seat_id)
-            CustomUser.objects.get(id=user_id)
+            self.seat = Seat.objects.get(id=seat_id)
+            self.user =CustomUser.objects.get(id=user_id)
             
-            if SeatBookings.objects.filter(seat=seat, is_active=True).exists():
-                raise CustomValidationException("Seat is already booked")
+            if self.seat.is_booked:
+                raise CustomValidationException("Seat is already booked", code=409)
         except Seat.DoesNotExist:
-            raise CustomValidationException("Seat does not exist")
+            raise CustomValidationException("Seat does not exist", code=404)
         except CustomUser.DoesNotExist:
-            raise CustomValidationException("User does not exist")
+            raise CustomValidationException("User does not exist", code=404)
         return attrs
 
-    def book_seat(self):
-        seat_id = self.validated_data.get('seat_id')
-        user_id = self.validated_data.get('user_id')
-        seat = Seat.objects.get(id=seat_id)
-        user = CustomUser.objects.get(id=user_id)
+    def book_seat(self):     
+        self.is_valid(raise_exception=True)
         SeatBookings.objects.create(
-            seat=seat,
-            user=user,
+            seat=self.seat,
+            user=self.user,
             is_active=True
         )
+        self.seat.is_booked = True
+        self.seat.save()
+
+
+class CheckoutSeatSerializer(serializers.Serializer):
+    seat_id = serializers.UUIDField()
+
+    def validate(self, attrs):
+        seat_id = attrs.get('seat_id')
+        
+        try:
+            self.seat = Seat.objects.get(id=seat_id)
+            self.seat_booking = SeatBookings.objects.filter(seat=self.seat, is_active=True).first()
+            if not self.seat.is_booked:
+                raise CustomValidationException("Seat is not booked")
+        except Seat.DoesNotExist:
+            raise CustomValidationException("Seat does not exist", code=404)
+        return attrs
+    
+    def checkout(self):
+        self.seat_booking.checkout_at = timezone.now()
+        self.seat_booking.is_active = False
+        self.seat.is_booked = False
+        self.seat_booking.save()
+        self.seat.save()
