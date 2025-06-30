@@ -1,6 +1,6 @@
 from django.urls import path
-from seats.views import SeatView
+from seats.views import SeatStateView
 
 urlpatterns = [
-    path('', SeatView.as_view(), name='seat'),
+    path('state/', SeatStateView.as_view(), name='seat_state')
 ]
