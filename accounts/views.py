@@ -46,7 +46,7 @@ class AdminAccessTokenView(APIView):
         )
 
 
-class CaptureData(APIView):
+class CaptureDataHelperView(APIView):
     permission_classes = [IsAdminUser]
     msg = "Data captured successfully"
     
@@ -66,8 +66,7 @@ class CaptureData(APIView):
             status=status.HTTP_400_BAD_REQUEST)
 
 
-
-class CreateMemberView(CaptureData):
+class CreateMemberView(CaptureDataHelperView):
     """
     API View for creating a new member.
     """
@@ -75,7 +74,7 @@ class CreateMemberView(CaptureData):
     msg = 'User created successfully'
     
 
-class CaptureNonMemberDataView(CaptureData):
+class CaptureNonMemberDataView(CaptureDataHelperView):
     """
     API View for capturing non member data
     """
