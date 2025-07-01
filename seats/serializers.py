@@ -33,6 +33,10 @@ class BookSeatSerializer(serializers.Serializer):
         try:
             self.seat = Seat.objects.get(id=seat_id)
             self.user =CustomUser.objects.get(id=user_id)
+
+            if not self.user.is_member:
+                # Confirm payments for non members
+                pass
             
             if self.seat.is_booked:
                 raise CustomValidationException("Seat is already booked", code=409)

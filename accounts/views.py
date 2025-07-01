@@ -3,7 +3,12 @@ from rest_framework import status
 
 from helpers.responses import CustomResponse
 from accounts.permissions import IsAdminUser
-from accounts.serializers import AdminLoginSerializer, CustomMemberCreateSerializer, AccessTokenSerializer
+from accounts.serializers import (
+    AdminLoginSerializer,
+    CustomMemberCreateSerializer,
+    AccessTokenSerializer,
+    CaptureNonMemberDataSerializer
+)
 
 
 class AdminLoginView(APIView):
@@ -39,14 +44,11 @@ class AdminAccessTokenView(APIView):
             msg="Access token generated successfully",
             data=serializer.validated_data
         )
-    
 
-class CreateMemberView(APIView):
-    """
-    API View for creating a new member.
-    """
-    serializer_class = CustomMemberCreateSerializer
+
+class CaptureData(APIView):
     permission_classes = [IsAdminUser]
+    msg = "Data captured successfully"
     
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -54,12 +56,28 @@ class CreateMemberView(APIView):
             user = serializer.save()
             return CustomResponse(
                 valid=True,
-                msg='User created successfully',
+                msg=self.msg,
                 status=status.HTTP_201_CREATED,
-                data=CustomMemberCreateSerializer(user).data
+                data=self.serializer_class(user).data
             )
         return CustomResponse(
             valid=False,
             msg=serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class CreateMemberView(CaptureData):
+    """
+    API View for creating a new member.
+    """
+    serializer_class = CustomMemberCreateSerializer
+    msg = 'User created successfully'
+    
+
+class CaptureNonMemberDataView(CaptureData):
+    """
+    API View for capturing non member data
+    """
+    serializer_class = CaptureNonMemberDataSerializer
+    msg = 'Non member data captured successfully'
