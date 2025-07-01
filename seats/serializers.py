@@ -3,7 +3,8 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 
 from helpers.exceptions import CustomValidationException
-from accounts.models import CustomUser 
+from accounts.models import CustomUser
+from payments.models import Payment
 from seats.models import Seat, SeatBookings
 
 
@@ -35,8 +36,9 @@ class BookSeatSerializer(serializers.Serializer):
             self.user =CustomUser.objects.get(id=user_id)
 
             if not self.user.is_member:
-                # Confirm payments for non members
-                pass
+                payment = Payment.objects.filter(user=self.user).first()
+                if not payment or payment.is_expired:
+                    raise CustomValidationException('User does not have an active payment', code=403)
             
             if self.seat.is_booked:
                 raise CustomValidationException("Seat is already booked", code=409)
