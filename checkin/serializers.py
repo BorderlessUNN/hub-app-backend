@@ -2,7 +2,6 @@ from rest_framework import serializers
 from accounts.models import CustomUser
 from helpers.exceptions import CustomValidationException
 from django.utils import timezone
-from checkin.models import CheckIn
 
 class MemberCheckInSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -32,9 +31,6 @@ class MemberCheckInSerializer(serializers.Serializer):
 
         self.member.last_checkin = now
         self.member.save(update_fields=["last_checkin"])
-
-        # Log Check-in
-        CheckIn.objects.create(user=self.member, timestamp=now)
 
         return self.member
 
@@ -90,8 +86,6 @@ class GuestCheckInSerializer(serializers.Serializer):
                 is_member=False
             )
             self.instance = guest
-
-        CheckIn.objects.create(user=self.instance)
 
         return self.instance
 
