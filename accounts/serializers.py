@@ -86,6 +86,8 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         """
+        Create a new member.
+        
         If a user with the email exists, update their data and mark as member.
         If not, create a new member.
         """
@@ -107,6 +109,49 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
             user.date_of_birth = validated_data['date_of_birth']
             user.tech_stack = validated_data['tech_stack']
             user.is_member = True
+            user.save()
+
+        return user
+    
+
+class CaptureNonMemberDataSerializer(CustomMemberCreateSerializer):
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id',
+            'user_name',
+            'email',
+            'department',
+            'whatsapp_number',
+            'date_of_birth',
+            'tech_stack',
+        ]
+    
+    def create(self, validated_data):
+        """
+        Capture non member data for reference
+        
+        If a user with the email exists, update their data.
+        If not, create a new non member.
+        """
+        email = validated_data['email']
+        user, created = CustomUser.objects.get_or_create(email=email, defaults={
+            'user_name': validated_data['user_name'],
+            'department': validated_data['department'],
+            'whatsapp_number': validated_data['whatsapp_number'],
+            'date_of_birth': validated_data['date_of_birth'],
+            'tech_stack': validated_data['tech_stack'],
+            'is_member': False
+        })
+
+        if not created:
+            # Update existing user fields
+            user.user_name = validated_data['user_name']
+            user.department = validated_data['department']
+            user.whatsapp_number = validated_data['whatsapp_number']
+            user.date_of_birth = validated_data['date_of_birth']
+            user.tech_stack = validated_data['tech_stack']
+            user.is_member = False
             user.save()
 
         return user

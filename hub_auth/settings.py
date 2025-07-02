@@ -47,7 +47,8 @@ INSTALLED_APPS = [
     
     'accounts.apps.AccountsConfig',
     'checkin.apps.CheckinConfig',
-
+    'seats.apps.SeatsConfig',
+    'payments.apps.PaymentsConfig',
 ]
 
 MIDDLEWARE = [
