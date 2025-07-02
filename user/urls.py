@@ -1,7 +1,6 @@
 from django.urls import path
-from checkin.views import MemberCheckInView, GuestCheckInView
+from user.views import UserExistsView
 
 urlpatterns = [
-    path('member/', MemberCheckInView.as_view(), name='member_checkin'),
-    path('guest/', GuestCheckInView.as_view(), name='guest_checkin'),
+    path('exists/', UserExistsView.as_view(), name='user_exists'),
 ]
