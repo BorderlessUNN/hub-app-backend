@@ -1,26 +1,26 @@
 from rest_framework.views import APIView
 from rest_framework import status
 from helpers.responses import CustomResponse
-from checkin.serializers import MemberCheckInSerializer
+from user_exists.serializers import UserExistsSerializer
 from accounts.permissions import IsAdminUser
 
 
-class MemberCheckInView(APIView):
+class UserExistsView(APIView):
     """
-    API for community member check-in
+    API to check if a hub user exists by email.
     """
 
-    serializer_class = MemberCheckInSerializer
+    serializer_class = UserExistsSerializer
     permission_classes = [IsAdminUser]
 
     def post(self, request):
-        serializer = MemberCheckInSerializer(data=request.data)
+        serializer = UserExistsSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return CustomResponse(
             valid=True,
             status=status.HTTP_200_OK,
-            msg="Check-in successful.",
+            msg="Hub user exists",
             data=serializer.data
         )
         return CustomResponse(
