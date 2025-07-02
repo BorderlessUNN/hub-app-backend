@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework import status
 from helpers.responses import CustomResponse
-from user_exists.serializers import UserExistsSerializer
+from user.serializers import UserExistsSerializer
 from accounts.permissions import IsAdminUser
 
 
@@ -13,7 +13,7 @@ class UserExistsView(APIView):
     serializer_class = UserExistsSerializer
     permission_classes = [IsAdminUser]
 
-    def post(self, request):
+    def get(self, request):
         serializer = UserExistsSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
