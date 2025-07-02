@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     
     'accounts.apps.AccountsConfig',
-    'checkin.apps.CheckinConfig',
+    'user.apps.UserConfig',
 
 ]
 
