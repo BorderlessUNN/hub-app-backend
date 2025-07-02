@@ -16,12 +16,11 @@ class UserExistsView(APIView):
     def get(self, request):
         serializer = UserExistsSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
             return CustomResponse(
             valid=True,
             status=status.HTTP_200_OK,
             msg="Hub user exists",
-            data=serializer.data
+            data=serializer.validated_data
         )
         return CustomResponse(
             valid=False,

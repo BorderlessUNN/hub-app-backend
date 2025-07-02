@@ -16,13 +16,10 @@ class UserExistsSerializer(serializers.Serializer):
                 code=404
             )
 
-        self.member = member
-        return attrs
-
-    def to_representation(self):
         return {
-            "id": str(self.member.id),
-            "name": self.member.user_name,
-            "email": self.member.email,
-            "is_member": self.member.is_member,
+            "id": str(member.id),
+            "name": member.user_name,
+            "email": member.email,
+            "is_member": member.is_member,
         }
+
