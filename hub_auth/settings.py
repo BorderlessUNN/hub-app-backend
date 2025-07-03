@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     
     'accounts.apps.AccountsConfig',
-    'user.apps.UserConfig',
     'seats.apps.SeatsConfig',
     'payments.apps.PaymentsConfig',
 ]

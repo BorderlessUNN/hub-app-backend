@@ -45,6 +45,5 @@ urlpatterns = [
     path(api_version_prefix + 'member/', include('accounts.urls.member_urls')),
     path(api_version_prefix + 'non-member/', include('accounts.urls.non_member_urls')),
     path(api_version_prefix + 'payments/', include('payments.urls')),
-    path(api_version_prefix + 'user/', include('user.urls')),
     path(api_version_prefix + 'seat/', include('seats.urls')), 
 ]
