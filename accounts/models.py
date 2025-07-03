@@ -17,7 +17,6 @@ class CustomUser(BaseModel):
     department = models.CharField(max_length=200)
     whatsapp_number = models.CharField(max_length=15)
     date_of_birth = models.DateField(blank=True, null=True)
-    last_checkin = models.DateTimeField(blank=True, null=True)
     tech_stack = models.CharField(max_length=200)
     is_member = models.BooleanField(default=False)
   
@@ -42,14 +41,6 @@ class CustomUser(BaseModel):
     def get_name(self):
         return f"{self.user_name}"
     
-    @staticmethod
-    def update_last_checkin(user):
-        """
-        Update the last check in time for the user when they checkin successfully.
-        """
-        user.last_checkin = timezone.now()
-        user.save(update_fields=['last_checkin'])
-
     class Meta:
         """
         Meta class for ordering the user objects by their IDs in descending order.
