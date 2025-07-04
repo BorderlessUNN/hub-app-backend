@@ -20,6 +20,7 @@ class UserStatsView(APIView):
     """
     API view for fetching user statistics
     """
+    permission_classes = [IsAdminUser]
     def get(self, request):
         months = request.query_params.get('months', 1)
         serializer = UserStatsSerializer(instance={}, context={'months': months})
