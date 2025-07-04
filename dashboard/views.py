@@ -9,7 +9,7 @@ class CheckInStatsView(APIView):
     """
     permission_classes = [IsAdminUser]
     def get(self, request):
-        serializer = CheckInStatsSerializer()
+        serializer = CheckInStatsSerializer(instance={})
         return CustomResponse(
             valid=True,
             msg="Check-in statistics fetched successfully",
