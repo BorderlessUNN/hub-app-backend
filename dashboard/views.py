@@ -8,8 +8,10 @@ class CheckInStatsView(APIView):
     API view for fetching check-in statistics
     """
     permission_classes = [IsAdminUser]
+    serializer_class = CheckInStatsSerializer
+    
     def get(self, request):
-        serializer = CheckInStatsSerializer(instance={})
+        serializer = self.serializer_class(instance={})
         return CustomResponse(
             valid=True,
             msg="Check-in statistics fetched successfully",
@@ -21,9 +23,11 @@ class UserStatsView(APIView):
     API view for fetching user statistics
     """
     permission_classes = [IsAdminUser]
+    serializer_class = UserStatsSerializer
+    
     def get(self, request):
-        months = request.query_params.get('months', 1)
-        serializer = UserStatsSerializer(instance={}, context={'months': months})
+        serializer = self.serializer_class(data=request.data, instance={})
+        serializer.is_valid(raise_exception=True)
         return CustomResponse(
             valid=True,
             msg="User statistics fetched successfully",

@@ -46,5 +46,5 @@ urlpatterns = [
     path(api_version_prefix + 'non-member/', include('accounts.urls.non_member_urls')),
     path(api_version_prefix + 'payments/', include('payments.urls')),
     path(api_version_prefix + 'seat/', include('seats.urls')), 
-    path(api_version_prefix + 'stats/', include('dashboard.urls.stat_urls')),
+    path(api_version_prefix + 'dashboard/stats/', include('dashboard.urls.stat_urls')),
 ]

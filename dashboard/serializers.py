@@ -11,18 +11,16 @@ class CheckInStatsSerializer(serializers.Serializer):
     checked_in_users = serializers.SerializerMethodField()
 
     def get_checked_in_users(self, obj):
-        return self._get_today_checkins()
+        return self._checked_in_users()
 
     def get_checked_in_count(self, obj):
-        return len(self._get_today_checkins())
+        return len(self._checked_in_users())
 
     def get_available_seats(self, obj):
         return self._get_available_seats()
 
-    def _get_today_checkins(self):
-        today = now().date()
+    def _checked_in_users(self):
         checkins = SeatBookings.objects.filter(
-            checkin_at__date=today,
             is_active=True
         ).select_related('user', 'seat')
 
@@ -41,11 +39,20 @@ class CheckInStatsSerializer(serializers.Serializer):
         return total_seats - booked_seats
 
 class UserStatsSerializer(serializers.Serializer):
-    total_users = serializers.SerializerMethodField()
+    total_checked_in_users = serializers.SerializerMethodField()
     member_percentage = serializers.SerializerMethodField()
     non_member_percentage = serializers.SerializerMethodField()
+    no_of_months = serializers.IntegerField(required=False)
 
-    def get_total_users(self, obj):
+    class Meta:
+        fields = [
+            'total_checked_in_users',
+            'member_percentage',
+            'non_member_percentage',
+            'no_of_months'
+        ]
+
+    def get_total_checked_in_users(self, obj):
         return self._get_user_stats()['total']
 
     def get_member_percentage(self, obj):
@@ -56,7 +63,7 @@ class UserStatsSerializer(serializers.Serializer):
 
     def _get_user_stats(self):
         # Get months from context or default to 1
-        months = self.context.get('months', 1)
+        months = self.validated_data.get('no_of_months', 1)
         try:
             months = int(months)
             if months <= 0:
@@ -65,14 +72,12 @@ class UserStatsSerializer(serializers.Serializer):
             months = 1
 
         since = now() - timedelta(days=months * 30)
-
         user_ids = (
             SeatBookings.objects
             .filter(checkin_at__gte=since)
             .values_list('user_id', flat=True)
             .distinct()
         )
-
         users = CustomUser.objects.filter(id__in=user_ids)
         total = users.count()
 
@@ -82,10 +87,8 @@ class UserStatsSerializer(serializers.Serializer):
                 "member_percentage": 0.0,
                 "non_member_percentage": 0.0
             }
-
         member_count = users.filter(is_member=True).count()
         non_member_count = total - member_count
-
         return {
             "total": total,
             "member_percentage": round((member_count / total) * 100, 2),
