@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'hub_auth.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-if os.getenv("RAILWAY_ENVIRONMENT"):
+if os.getenv("PRODUCTION"):
     # Use Railway's DATABASE_URL inside Railway
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600)
