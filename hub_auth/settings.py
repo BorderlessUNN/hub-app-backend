@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-c=aoj2fyuj**f95hl21i9#l8%gj$mc2e4$m55u+n$s4w*c=nis
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_spectacular',
     'rest_framework_simplejwt',
+    'corsheaders',
     
     'accounts.apps.AccountsConfig',
     'seats.apps.SeatsConfig',
@@ -59,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'hub_auth.urls'
@@ -177,3 +179,4 @@ SPECTACULAR_SETTINGS = {
     'SCHEMA_PATH_PREFIX': '/api/v1/',  # trims URLs for cleaner docs
 }
 
+CORS_ALLOW_ALL_ORIGINS = True
