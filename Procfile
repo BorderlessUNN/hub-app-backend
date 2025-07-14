@@ -1,1 +1,1 @@
-web: gunicorn hub_auth_backend.wsgi
+web: gunicorn hub_auth.wsgi
