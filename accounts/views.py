@@ -91,7 +91,7 @@ class UserExistsView(APIView):
     serializer_class = UserExistsSerializer
     permission_classes = [IsAdminUser]
 
-    def get(self, request):
+    def post(self, request):
         serializer = UserExistsSerializer(data=request.data)
         if serializer.is_valid():
             return CustomResponse(
