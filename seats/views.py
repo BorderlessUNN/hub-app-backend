@@ -60,3 +60,4 @@ class CheckoutSeatView(APIView):
             msg="Seat checkout successful",
             status=200
         )
+    

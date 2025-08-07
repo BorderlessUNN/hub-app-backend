@@ -35,7 +35,23 @@ class AdminLoginSerializer(serializers.Serializer):
             'id': admin.id,
             'tokens': get_auth_tokens_for_admin(admin)
         }
-    
+
+class TokenSerializer(serializers.Serializer):
+    refresh_token = serializers.CharField()
+    access_token = serializers.CharField()
+
+class AccessTokenResponseSerializer(serializers.Serializer):
+    print("generating access token schema")
+    access_token = serializers.CharField()
+    name = serializers.CharField()
+
+class AdminLoginResponseSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    email = serializers.EmailField()
+    id = serializers.UUIDField()
+    tokens = TokenSerializer()
+    print("generating admin login schema")
+
 
 class AccessTokenSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
@@ -45,7 +61,6 @@ class AccessTokenSerializer(serializers.Serializer):
         return {
             'access_token': get_access_token_from_refresh_token(refresh_token)
         }
-
 
 
 class CustomMemberCreateSerializer(serializers.ModelSerializer):
@@ -176,3 +191,9 @@ class UserExistsSerializer(serializers.Serializer):
             "email": member.email,
             "is_member": member.is_member,
         }
+    
+class UserExistsResponseSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    email = serializers.EmailField()
+    is_member = serializers.BooleanField()

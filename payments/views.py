@@ -1,15 +1,16 @@
 from rest_framework.views import APIView
 
-from helpers.responses import CustomResponse
+from helpers.responses import CustomResponse, custom_post_schema
 from accounts.permissions import IsAdminUser
 from payments.models import Plans
-from payments.serializers import ConfirmPaymentSerializer, PaymentPlansSerializer
+from payments.serializers import ConfirmPaymentSerializer, PaymentPlansSerializer, PaymentResponseSerializer
 
 
 class ConfirmPaymentView(APIView):
     permission_classes = [IsAdminUser]
     serializer_class = ConfirmPaymentSerializer
     
+    @custom_post_schema(ConfirmPaymentSerializer, PaymentResponseSerializer, status_code=200)
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)

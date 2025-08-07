@@ -1,14 +1,17 @@
 from rest_framework.views import APIView
 from rest_framework import status
 
-from helpers.responses import CustomResponse
+from helpers.responses import CustomResponse, custom_post_schema 
 from accounts.permissions import IsAdminUser
 from accounts.serializers import (
     AdminLoginSerializer,
+    AdminLoginResponseSerializer,
     CustomMemberCreateSerializer,
     AccessTokenSerializer,
+    AccessTokenResponseSerializer,
     CaptureNonMemberDataSerializer,
-    UserExistsSerializer
+    UserExistsSerializer,
+    UserExistsResponseSerializer
 )
 
 
@@ -16,9 +19,9 @@ class AdminLoginView(APIView):
     """
     API view for CustomAdmin login
     """
-
     serializer_class = AdminLoginSerializer
-    
+
+    @custom_post_schema(AdminLoginSerializer, AdminLoginResponseSerializer, status_code=status.HTTP_200_OK)
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -34,9 +37,9 @@ class AdminAccessTokenView(APIView):
     """
     Get the access token for a user from the refresh token
     """
-
     serializer_class = AccessTokenSerializer
 
+    @custom_post_schema(AccessTokenSerializer, AccessTokenResponseSerializer, status_code=status.HTTP_200_OK)
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -88,9 +91,10 @@ class UserExistsView(APIView):
     API to check if a hub user exists by email.
     """
 
-    serializer_class = UserExistsSerializer
+    
     permission_classes = [IsAdminUser]
 
+    @custom_post_schema(UserExistsSerializer, UserExistsResponseSerializer, status_code=status.HTTP_200_OK)
     def post(self, request):
         serializer = UserExistsSerializer(data=request.data)
         if serializer.is_valid():

@@ -9,7 +9,6 @@ from helpers.exceptions import CustomValidationException
 class ConfirmPaymentSerializer(serializers.Serializer):
     user_id = serializers.UUIDField()
     plan_id = serializers.UUIDField()
-    expires_at = serializers.DateTimeField(required=False)
 
     def validate(self, attrs):
         user_id = attrs.get('user_id')
@@ -32,7 +31,16 @@ class ConfirmPaymentSerializer(serializers.Serializer):
             plan=self.plan,
             expires_at=timezone.now() + timezone.timedelta(hours=self.plan.hours)
         )
-    
+
+class PaymentResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    user_id = serializers.UUIDField(source='user.id')
+    plan_id = serializers.UUIDField(source='plan.id')
+    plan_name = serializers.CharField(source='plan.name')
+    expires_at = serializers.DateTimeField()
+    created_at = serializers.DateTimeField()
+    is_expired = serializers.BooleanField()
+
 
 class PaymentPlansSerializer(serializers.ModelSerializer):
     class Meta:
