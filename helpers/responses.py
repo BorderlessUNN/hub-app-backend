@@ -1,5 +1,7 @@
 from django.conf import settings
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema, OpenApiResponse
+from rest_framework import serializers
 
 
 class CustomResponse(Response):
@@ -26,6 +28,39 @@ class CustomResponse(Response):
         }
         if valid is False and status <= 201:
             status = 400
-        if not data is None:
+        if data:
             content["data"] = data
         super().__init__(content, status=status)
+
+
+def custom_post_schema(request_serializer, response_serializer, status_code=200):
+    """
+    Returns an @extend_schema decorator for POST endpoints with CustomResponse format.
+
+    Example response format:
+    {
+        "status": true,
+        "msg": "message",
+        "data": { ...response fields... }
+    }
+    """
+
+    # Dynamically create a new serializer class with a unique name
+    class_name = f'Wrapped{response_serializer.__name__}'
+    print(class_name)
+
+    WrappedResponseSerializer = type(
+        class_name,
+        (serializers.Serializer,),
+        {
+            'status': serializers.BooleanField(),
+            'msg': serializers.CharField(),
+            'data': response_serializer(required=False),
+        }
+    )
+
+    return extend_schema(
+        request=request_serializer,
+        responses={status_code: OpenApiResponse(response=WrappedResponseSerializer)}
+    )
+
