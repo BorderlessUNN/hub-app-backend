@@ -2,8 +2,8 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from helpers.exceptions import CustomValidationException
 
 
-def get_auth_tokens_for_admin(admin):
-    refresh = RefreshToken.for_user(admin)
+def get_auth_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
     return {
         'refresh_token': str(refresh),
         'access_token': str(refresh.access_token),
