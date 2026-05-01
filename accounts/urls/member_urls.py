@@ -1,5 +1,5 @@
 from django.urls import path
-from accounts.views import CreateMemberView, UserExistsView, SetPasswordView, CheckIfUserHasPasswordView, MemberLoginView, CustomUserView
+from accounts.views import CreateMemberView, UserExistsView, SetPasswordView, CheckIfUserHasPasswordView, MemberLoginView
 
 urlpatterns = [
     path('create/', CreateMemberView.as_view(), name='create-user'),

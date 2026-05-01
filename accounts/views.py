@@ -20,7 +20,6 @@ from accounts.serializers import (
     CheckIfUserHasPasswordResponseSerializer,
     MemberLoginSerializer,
     MemberLoginResponseSerializer,
-    CustomUserSerializer,
     MeSerializer,
     LogoutSerializer,
     LogoutResponseSerializer,
@@ -132,17 +131,6 @@ class UserExistsView(APIView):
             valid=False,
             msg=serializer.errors,
             status=status.HTTP_400_BAD_REQUEST)
-
-# class CustomUserView(APIView):
-#     """ Get all users """
-#     serializer_class = CustomUserSerializer
-#     def get(self, request):
-#         users = CustomUser.objects.all()
-#         return CustomResponse(
-#             valid=True,
-#             msg="Users fetched successfully",
-#             data=self.serializer_class(users, many=True).data
-#         )
 
 class CheckIfUserHasPasswordView(APIView):
     """

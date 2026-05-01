@@ -245,11 +245,6 @@ class CheckIfUserHasPasswordSerializer(serializers.Serializer):
             )
         return attrs
 
-# class CustomUserSerializer(serializers.ModelSerializer):    
-#     class Meta:
-#         model = CustomUser
-        # fields = ['id', 'user_name', 'email', 'department', 'whatsapp_number', 'date_of_birth', 'tech_stack', 'is_member', 'is_active', 'is_staff', 'is_superuser', 'last_login']
-
 class CheckIfUserHasPasswordResponseSerializer(serializers.Serializer):
     has_password = serializers.BooleanField()
     valid = serializers.BooleanField()
@@ -280,7 +275,6 @@ class MemberLoginSerializer(serializers.Serializer):
                     code=401
                 )
             user.update_last_login()
-            user.save()
             user_data = {
                 'name': user.user_name,
                 'role': 'member',

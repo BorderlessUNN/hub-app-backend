@@ -45,4 +45,4 @@ class PaymentResponseSerializer(serializers.Serializer):
 class PaymentPlansSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plans
-        fields = ['id', 'name', 'price']
+        fields = ['id', 'name', 'price', 'hours', 'slug']
