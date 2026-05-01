@@ -47,11 +47,12 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework_simplejwt',
     'corsheaders',
-    
+    'rest_framework_simplejwt.token_blacklist',
     'accounts.apps.AccountsConfig',
     'seats.apps.SeatsConfig',
     'payments.apps.PaymentsConfig',
     'dashboard.apps.DashboardConfig',
+
 ]
 
 MIDDLEWARE = [
@@ -123,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'accounts.CustomAdmin'
+AUTH_USER_MODEL = 'accounts.CustomUser'
 
 
 # Internationalization
@@ -153,15 +154,17 @@ API_KEY = env("API_KEY")
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # The order matters. Api key auth comes first then user auth
-        'helpers.api_key.APIKeyAuthentication',
-        'accounts.auth.CustomAdminAuthentication',
+        # 'helpers.api_key.APIKeyAuthentication',
+        'accounts.auth.CustomUserAuthentication',
     ],
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -169,6 +172,20 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API backend for Borderless Tech Clubs(UNN) chapter',
     'VERSION': '1.0.0',
 
+    'COMPONENT_SPLIT_PATCH': True,
+    'COMPONENT_SPLIT_COMMAND': True,
+    'SECURITY': [{
+        'bearerAuth': [],
+    }],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'bearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
     # TODO: Fill below with the correct info
     'TOS': 'https://example.com/terms/',
     'CONTACT': {

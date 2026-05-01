@@ -1,10 +1,10 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication, api_settings
 from rest_framework_simplejwt.exceptions import TokenError
-from accounts.models import CustomAdmin
+from accounts.models import CustomUser
 from helpers.exceptions import CustomValidationException
 
 
-class CustomAdminAuthentication(JWTAuthentication):
+class CustomUserAuthentication(JWTAuthentication):
     def get_validated_token(self, raw_token):
         for AuthToken in api_settings.AUTH_TOKEN_CLASSES:
             try:
@@ -21,6 +21,6 @@ class CustomAdminAuthentication(JWTAuthentication):
             return None
 
         try:
-            return CustomAdmin.objects.get(id=user_id)
-        except CustomAdmin.DoesNotExist:
+            return CustomUser.objects.get(id=user_id)
+        except CustomUser.DoesNotExist:
             return None
