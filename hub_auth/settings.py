@@ -172,6 +172,20 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API backend for Borderless Tech Clubs(UNN) chapter',
     'VERSION': '1.0.0',
 
+    'COMPONENT_SPLIT_PATCH': True,
+    'COMPONENT_SPLIT_COMMAND': True,
+    'SECURITY': [{
+        'bearerAuth': [],
+    }],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'bearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
     # TODO: Fill below with the correct info
     'TOS': 'https://example.com/terms/',
     'CONTACT': {
