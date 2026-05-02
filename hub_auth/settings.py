@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'seats.apps.SeatsConfig',
     'payments.apps.PaymentsConfig',
     'dashboard.apps.DashboardConfig',
+    'subscription.apps.SubscriptionConfig',
+    'check_in.apps.CheckInConfig',
 
 ]
 
