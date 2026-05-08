@@ -1,16 +1,17 @@
 from django.db import models
-from django.utils import timezone
 from helpers.models import BaseModel
 from accounts.models import CustomUser
 from django.utils.text import slugify
-
+from subscription.models import Subscription
 
 class Plans(BaseModel):
     name = models.CharField(max_length=20)
-    price = models.IntegerField(null=False, blank=False)
-    hours = models.IntegerField(null=False, blank=False)
+    price = models.IntegerField(null=False, blank=False,)
+    hours = models.IntegerField(null=True, blank=True)
     slug  = models.SlugField( blank=True, null=True)
-    is_member_only = models.BooleanField(null=False, blank=False,)
+    is_member_only = models.BooleanField(default=True)
+    is_paid_in_installment = models.BooleanField(null=True, blank=True)
+    installment_price = models.IntegerField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -18,7 +19,7 @@ class Plans(BaseModel):
         super().save(*args, **kwargs)
     
     def __str__(self):
-        return self.name
+        return self.slug
 
 class Payment(BaseModel):
     class PaymentType(models.TextChoices):
@@ -32,20 +33,22 @@ class Payment(BaseModel):
     class InstallmentNumber(models.TextChoices):
         ONE = '1', 'One'
         TWO = '2', 'Two'
-    user_id = models.ForeignKey(
+    user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
         related_name='payments'
     )
-    plan_id = models.ForeignKey(
-        Plans,
+    subscription = models.ForeignKey(
+        Subscription,
         on_delete=models.CASCADE,
-        related_name='payments'
+        related_name='payments',
+        null=True,
+        blank=True
     )
-    amount = models.BigIntegerField(null=False, blank=False)
-    payment_type = models.CharField(max_length=30, choices=PaymentType.choices, blank = False, null = False)
-    payment_status = models.CharField(max_length=30, choices=PaymentStatus.choices, blank = False, null = False)
-    paystack_reference = models.CharField(max_length=100, null = False, blank = False)
-    installment_number = models.CharField(max_length=30, choices=InstallmentNumber.choices, blank = False, null = False)
+    amount = models.BigIntegerField(null = True, blank = True)
+    payment_type = models.CharField(max_length=30, choices=PaymentType.choices, blank = False, null = False, default=PaymentType.MEMBER_MONTHLY)
+    payment_status = models.CharField(max_length=30, choices=PaymentStatus.choices, blank = False, null = False, default=PaymentStatus.PENDING)
+    paystack_reference = models.CharField(max_length=100, null = True, blank = True)
+    installment_number = models.CharField(max_length=30, choices=InstallmentNumber.choices, blank = True, null = True)
 
 

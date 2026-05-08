@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'drf_spectacular',
+    'django_filters',
     'rest_framework_simplejwt',
     'corsheaders',
     'rest_framework_simplejwt.token_blacklist',
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
     'seats.apps.SeatsConfig',
     'payments.apps.PaymentsConfig',
     'dashboard.apps.DashboardConfig',
+    'hub_closure.apps.HubClosureConfig',
     'subscription.apps.SubscriptionConfig',
     'check_in.apps.CheckInConfig',
 
@@ -151,8 +153,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+PAYSTACK_SECRET_KEY = env("PAYSTACK_SECRET_KEY")
 API_KEY = env("API_KEY")
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # The order matters. Api key auth comes first then user auth
@@ -163,7 +166,7 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30), #change to 5 minutes later
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
