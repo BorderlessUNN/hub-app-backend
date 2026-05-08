@@ -54,7 +54,7 @@ class CustomUser(BaseModel, AbstractBaseUser, PermissionsMixin):
         unique=True,
         error_messages={"unique": "A user with this email already exists."}
     )
-    whatsapp_number = models.CharField(max_length=15, blank=True, null=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
     
     # Club Specific Info
     department = models.CharField(max_length=200, blank=True, null =True)

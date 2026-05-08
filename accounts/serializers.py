@@ -35,7 +35,7 @@ class AdminLoginSerializer(serializers.Serializer):
         
         admin.update_last_login()
         return {
-            'name': admin.name,
+            'name': admin.user_name,
             'email': admin.email,
             'id': admin.id,
             'tokens': get_auth_tokens_for_user(admin)
@@ -80,7 +80,7 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
             'user_name',
             'email',
             'department',
-            'whatsapp_number',
+            'phone_number',
             'date_of_birth',
             'tech_stack',
         ]
@@ -88,7 +88,7 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
             'user_name': {'required': True},
             'email': {'required': True},
             'department': {'required': True},
-            'whatsapp_number': {'required': True},
+            'phone_number': {'required': True},
             'date_of_birth': {'required': True},
             'tech_stack': {'required': True},
         }
@@ -115,7 +115,7 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
         user, created = CustomUser.objects.get_or_create(email=email, defaults={
             'user_name': validated_data['user_name'],
             'department': validated_data['department'],
-            'whatsapp_number': validated_data['whatsapp_number'],
+            'phone_number': validated_data['phone_number'],
             'date_of_birth': validated_data['date_of_birth'],
             'tech_stack': validated_data['tech_stack'],
             'is_member': True
@@ -125,7 +125,7 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
             # Update existing user fields
             user.user_name = validated_data['user_name']
             user.department = validated_data['department']
-            user.whatsapp_number = validated_data['whatsapp_number']
+            user.phone_number = validated_data['phone_number']
             user.date_of_birth = validated_data['date_of_birth']
             user.tech_stack = validated_data['tech_stack']
             user.is_member = True
@@ -142,7 +142,7 @@ class CaptureNonMemberDataSerializer(CustomMemberCreateSerializer):
             'user_name',
             'email',
             'department',
-            'whatsapp_number',
+            'phone_number',
             'date_of_birth',
             'tech_stack',
         ]
@@ -158,7 +158,7 @@ class CaptureNonMemberDataSerializer(CustomMemberCreateSerializer):
         user, created = CustomUser.objects.get_or_create(email=email, defaults={
             'user_name': validated_data['user_name'],
             'department': validated_data['department'],
-            'whatsapp_number': validated_data['whatsapp_number'],
+            'phone_number': validated_data['phone_number'],
             'date_of_birth': validated_data['date_of_birth'],
             'tech_stack': validated_data['tech_stack'],
             'is_member': False
@@ -168,7 +168,7 @@ class CaptureNonMemberDataSerializer(CustomMemberCreateSerializer):
             # Update existing user fields
             user.user_name = validated_data['user_name']
             user.department = validated_data['department']
-            user.whatsapp_number = validated_data['whatsapp_number']
+            user.phone_number = validated_data['phone_number']
             user.date_of_birth = validated_data['date_of_birth']
             user.tech_stack = validated_data['tech_stack']
             user.is_member = False
@@ -209,7 +209,7 @@ class CustomMemberCreateResponseSerializer(serializers.Serializer):
     email = serializers.EmailField()
     is_member = serializers.BooleanField()
     department = serializers.CharField()
-    whatsapp_number = serializers.CharField()
+    phone_number = serializers.CharField()
     date_of_birth = serializers.DateField()
     tech_stack = serializers.CharField()
 
@@ -321,6 +321,21 @@ class LogoutSerializer(serializers.Serializer):
         return {
             'refresh_token': refresh_token
         }
+
+class CustomUserSerializer(serializers.ModelSerializer):
+    role = serializers.SerializerMethodField()
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'user_name', 'email', 'department', 'phone_number', 'date_of_birth', 'tech_stack', 'role']
+        read_only_fields = fields
+    
+    def get_role(self, obj):
+        if obj.is_superuser:
+            return 'admin'
+        elif obj.is_member:
+            return 'member'
+        else:
+            return 'non_member'
 
 class LogoutResponseSerializer(serializers.Serializer):
     msg = serializers.CharField()

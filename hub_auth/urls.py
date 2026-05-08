@@ -44,8 +44,11 @@ urlpatterns = [
     path(api_version_prefix + 'admin/', include('accounts.urls.admin_urls')),
     path(api_version_prefix + 'member/', include('accounts.urls.member_urls')),
     path(api_version_prefix + 'non-member/', include('accounts.urls.non_member_urls')),
-    path(api_version_prefix + 'payments/', include('payments.urls')),
     path(api_version_prefix + 'seat/', include('seats.urls')), 
+    path(api_version_prefix + 'subscription/', include('subscription.urls')),
     path(api_version_prefix + 'auth/', include('accounts.urls.auth_urls')),
     path(api_version_prefix + 'dashboard/stats/', include('dashboard.urls.stat_urls')),
+    path(api_version_prefix + 'plans/', include('payments.urls.plan_urls')),
+    path(api_version_prefix + 'payments/', include('payments.urls.payment_urls')),
+    path(api_version_prefix + 'check-in/', include('check_in.urls')),
 ]

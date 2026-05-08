@@ -32,17 +32,23 @@ class ConfirmPaymentSerializer(serializers.Serializer):
             expires_at=timezone.now() + timezone.timedelta(hours=self.plan.hours)
         )
 
-class PaymentResponseSerializer(serializers.Serializer):
-    id = serializers.UUIDField()
+class PaymentResponseSerializer(serializers.ModelSerializer):
     user_id = serializers.UUIDField(source='user.id')
-    plan_id = serializers.UUIDField(source='plan.id')
-    plan_name = serializers.CharField(source='plan.name')
-    expires_at = serializers.DateTimeField()
-    created_at = serializers.DateTimeField()
-    is_expired = serializers.BooleanField()
+    subscription_id = serializers.UUIDField(source='subscription.id')
+    class Meta:
+        model = Payment
+        fields = ['id', 'user_id','subscription_id', 'amount', 'payment_type', 'payment_status', 'paystack_reference', 'installment_number', 'created_at', 'updated_at']
 
 
 class PaymentPlansSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plans
-        fields = ['id', 'name', 'price', 'hours', 'slug']
+        fields = ['id', 'name', 'price', 'hours', 'slug', 'is_member_only', 'is_paid_in_installment', 'installment_price']
+        read_only_fields = ['slug', 'id']
+        
+    def create(self, validated_data):
+        plan = Plans.objects.create(**validated_data)
+        return plan
+
+class VerifyPaymentSerializer(serializers.Serializer):
+    reference = serializers.CharField()
