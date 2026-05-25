@@ -30,20 +30,21 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
 
-    # def create_admin(self, user_name, email, password, **extra_fields):
-    #     """
-    #     Admin creation logic with the strict 2-admin limit.
-    #     """
-    #     if self.filter(is_staff=True).count() >= 2:
-    #         raise ValidationError("Maximum number of admins (2) already exists.")
+    def create_admin(self, user_name, email, password, **extra_fields):
+        """
+        Admin creation logic with the strict 2-admin limit.
+        """
+        if self.filter(is_staff=True).count() >= 2:
+            raise ValidationError("Maximum number of admins (2) already exists.")
 
-    #     extra_fields.setdefault('is_staff', True)
-    #     return self.create_user(
-    #         email=email, 
-    #         password=password, 
-    #         user_name=user_name, 
-    #         **extra_fields
-    #     )
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        return self.create_user(
+            email=email,
+            password=password,
+            user_name=user_name,
+            **extra_fields
+        )
 
 class CustomUser(BaseModel, AbstractBaseUser, PermissionsMixin):
     """

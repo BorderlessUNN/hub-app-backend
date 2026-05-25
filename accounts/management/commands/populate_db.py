@@ -1,31 +1,36 @@
 import os
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ValidationError
-from accounts.models import CustomAdmin
+from accounts.models import CustomUser
 from seats.models import Seat
 from payments.models import Plans
 
 class Command(BaseCommand):
-    help = "Populates the database with one CustomAdmin, seat records, and payment plans."
+    help = "Populates the database with one admin user, seat records, and payment plans."
 
     def handle(self, *args, **kwargs):
-        # 1. Create a CustomAdmin account
+        # 1. Create an admin account (optional; requires env vars)
         admin_email = os.getenv("CUSTOM_ADMIN_EMAIL")
         admin_name = os.getenv("CUSTOM_ADMIN_NAME")
         admin_password = os.getenv("CUSTOM_ADMIN_PASSWORD")
 
-        try:
-            if not CustomAdmin.objects.filter(email=admin_email).exists():
-                CustomAdmin.objects.create_admin(
-                    admin_name=admin_name,
-                    email=admin_email,
-                    password=admin_password
-                )
-                self.stdout.write(self.style.SUCCESS("Custom admin created"))
-            else:
-                self.stdout.write(self.style.WARNING("Custom admin already exists"))
-        except ValidationError as e:
-            self.stdout.write(self.style.WARNING(f"Admin not created: {e.message}"))
+        if not all([admin_email, admin_name, admin_password]):
+            self.stdout.write(self.style.WARNING(
+                "Skipping admin creation: set CUSTOM_ADMIN_EMAIL, CUSTOM_ADMIN_NAME, and CUSTOM_ADMIN_PASSWORD"
+            ))
+        else:
+            try:
+                if not CustomUser.objects.filter(email=admin_email).exists():
+                    CustomUser.objects.create_admin(
+                        user_name=admin_name,
+                        email=admin_email,
+                        password=admin_password,
+                    )
+                    self.stdout.write(self.style.SUCCESS("Admin user created"))
+                else:
+                    self.stdout.write(self.style.WARNING("Admin user already exists"))
+            except ValidationError as e:
+                self.stdout.write(self.style.WARNING(f"Admin not created: {e}"))
 
         # 2. Create 10 seat records
         seat_count = 10

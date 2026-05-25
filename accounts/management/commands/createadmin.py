@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from accounts.models import CustomAdmin
+from accounts.models import CustomUser
 
 
 class Command(BaseCommand):
@@ -16,8 +16,8 @@ class Command(BaseCommand):
         password = options['password']
 
         try:
-            admin = CustomAdmin.objects.create_admin(
-                admin_name=admin_name,
+            admin = CustomUser.objects.create_admin(
+                user_name=admin_name,
                 email=email,
                 password=password
             )
