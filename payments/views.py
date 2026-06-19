@@ -36,12 +36,12 @@ class ConfirmPaymentView(APIView):
 
 class PaymentPlansView(APIView):
     serializer_class = PaymentPlansSerializer
-    permission_classes = [IsAuthenticated] # use get permission later
+    permission_classes = [IsAuthenticated] 
     
-    # def get_permissions(self):
-    #     if self.request.method == 'GET':
-    #         return [AllowAny()]
-    #     return [IsAdminUser()]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAdminUser()]
     
     def get(self, request):
         plans = Plans.objects.all()
