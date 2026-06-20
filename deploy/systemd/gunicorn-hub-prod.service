@@ -1,0 +1,22 @@
+# /etc/systemd/system/gunicorn-hub-prod.service
+[Unit]
+Description=Gunicorn (production) for Borderless Hub API
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=hub
+Group=www-data
+WorkingDirectory=/srv/hub/prod/hub-app-backend
+EnvironmentFile=/srv/hub/prod/hub-app-backend/.env
+ExecStart=/srv/hub/prod/venv/bin/gunicorn \
+    --workers 3 \
+    --bind 127.0.0.1:8001 \
+    --access-logfile - \
+    --error-logfile - \
+    hub_auth.wsgi:application
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
