@@ -10,7 +10,7 @@ case "$ENV" in
   *) echo "Unknown env: $ENV (use prod|staging)"; exit 1 ;;
 esac
 
-APP="$ROOT/hub-app-backend"
+APP="$ROOT"
 PY="$ROOT/venv/bin/python"
 PIP="$ROOT/venv/bin/pip"
 

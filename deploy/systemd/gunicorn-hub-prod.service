@@ -10,7 +10,7 @@ Group=www-data
 WorkingDirectory=/var/www/borderless-hub-app-backend-prod
 EnvironmentFile=/var/www/borderless-hub-app-backend-prod/.env
 ExecStart=/var/www/borderless-hub-app-backend-prod/venv/bin/gunicorn \
-    --workers 3 \
+    --workers 1 \
     --bind 127.0.0.1:8001 \
     --access-logfile - \
     --error-logfile - \
