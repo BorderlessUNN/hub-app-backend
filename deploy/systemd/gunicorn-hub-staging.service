@@ -7,9 +7,9 @@ Requires=postgresql.service
 [Service]
 User=hub
 Group=www-data
-WorkingDirectory=/srv/hub/staging/hub-app-backend
-EnvironmentFile=/srv/hub/staging/hub-app-backend/.env
-ExecStart=/srv/hub/staging/venv/bin/gunicorn \
+WorkingDirectory=/var/www/borderless-hub-app-backend-test
+EnvironmentFile=/var/www/borderless-hub-app-backend-test/.env
+ExecStart=/var/www/borderless-hub-app-backend-test/venv/bin/gunicorn \
     --workers 2 \
     --bind 127.0.0.1:8002 \
     --access-logfile - \

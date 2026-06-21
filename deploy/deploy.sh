@@ -5,8 +5,8 @@ set -euo pipefail
 
 ENV="${1:?Usage: deploy.sh <prod|staging>}"
 case "$ENV" in
-  prod)    ROOT=/srv/hub/prod;    SERVICE=gunicorn-hub-prod ;;
-  staging) ROOT=/srv/hub/staging; SERVICE=gunicorn-hub-staging ;;
+  prod)    ROOT=/var/www/borderless-hub-app-backend-prod;    SERVICE=gunicorn-hub-prod ;;
+  staging) ROOT=/var/www/borderless-hub-app-backend-test; SERVICE=gunicorn-hub-staging ;;
   *) echo "Unknown env: $ENV (use prod|staging)"; exit 1 ;;
 esac
 
