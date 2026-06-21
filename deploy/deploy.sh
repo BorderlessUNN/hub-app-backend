@@ -19,7 +19,7 @@ VENV="$ROOT/venv"
 run() { sudo -u "$APP_USER" "$@"; }
 
 echo ">> Deploying $ENV from $APP (as $APP_USER)"
-run git -C "$APP" pull --ff-only
+run sudo -u "$APP_USER" git -C "$APP" pull --ff-only
 run "$VENV/bin/pip" install -r "$APP/requirements.txt"
 run "$VENV/bin/python" "$APP/manage.py" migrate --noinput
 run "$VENV/bin/python" "$APP/manage.py" collectstatic --noinput
