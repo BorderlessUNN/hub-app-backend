@@ -1,9 +1,16 @@
 from django.urls import path
-from payments.views import ConfirmPaymentView, PaymentWebhookView, VerifyPaymentView, PaymentView
+from payments.views import (
+    ConfirmPaymentView,
+    PaymentWebhookView,
+    VerifyPaymentView,
+    PaymentView,
+    RecordOfflinePaymentView,
+)
 
 urlpatterns = [
     path('confirm/', ConfirmPaymentView.as_view(), name='confirm-payment'),
     path('webhook/', PaymentWebhookView.as_view(), name='payment-webhook'),
     path('verify/', VerifyPaymentView.as_view(), name='verify-payment'),
     path('payment/', PaymentView.as_view(), name='payment'),
+    path('record-offline/', RecordOfflinePaymentView.as_view(), name='record-offline-payment'),
 ]

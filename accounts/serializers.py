@@ -1,9 +1,34 @@
 from django.contrib.auth.hashers import check_password
+from django.db.models import Q
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from accounts.models import CustomUser
 from accounts.tokens import get_auth_tokens_for_user, get_access_token_from_refresh_token
+from accounts.utils import normalize_phone_number
 from helpers.exceptions import CustomValidationException
+
+
+NOT_A_MEMBER_MSG = (
+    "No community membership found for this phone number or email. "
+    "Book a session instead if you're not yet a member."
+)
+
+
+def not_a_member_exception():
+    exc = CustomValidationException(msg=NOT_A_MEMBER_MSG, code=404)
+    exc.detail['not_a_member'] = True
+    return exc
+
+
+def resolve_member_identifier_filter(identifier):
+    """
+    A member login identifier may be an email or a phone number.
+    Returns a Q filter usable against CustomUser.
+    """
+    identifier = (identifier or '').strip()
+    if '@' in identifier:
+        return Q(email=identifier.lower())
+    return Q(phone_number=normalize_phone_number(identifier))
 
 
 class AdminLoginSerializer(serializers.Serializer):
@@ -102,6 +127,7 @@ class CustomMemberCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         attrs['email'] = attrs['email'].lower()
         attrs['user_name'] = attrs['user_name'].title()
+        attrs['phone_number'] = normalize_phone_number(attrs.get('phone_number'))
         return attrs
 
     def create(self, validated_data):
@@ -214,18 +240,18 @@ class CustomMemberCreateResponseSerializer(serializers.Serializer):
     tech_stack = serializers.CharField()
 
 class SetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    identifier = serializers.CharField(required=True, help_text="Member's email or phone number")
     password = serializers.CharField(required=True, min_length=8, write_only=True)
 
     def validate(self, attrs):
-        email = attrs.get('email')
+        identifier = attrs.get('identifier')
         try:
-            CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(resolve_member_identifier_filter(identifier))
         except CustomUser.DoesNotExist:
-            raise CustomValidationException(
-                msg="User not found",
-                code=404
-            )
+            raise not_a_member_exception()
+        if not user.is_member:
+            raise not_a_member_exception()
+        attrs['user'] = user
         return attrs
 
 class SetPasswordResponseSerializer(serializers.Serializer):
@@ -233,16 +259,17 @@ class SetPasswordResponseSerializer(serializers.Serializer):
     valid = serializers.BooleanField()
 
 class CheckIfUserHasPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    identifier = serializers.CharField(required=True, help_text="Member's email or phone number")
+
     def validate(self, attrs):
-        email = attrs.get('email')
+        identifier = attrs.get('identifier')
         try:
-            CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(resolve_member_identifier_filter(identifier))
         except CustomUser.DoesNotExist:
-            raise CustomValidationException(
-                msg="User not found",
-                code=404
-            )
+            raise not_a_member_exception()
+        if not user.is_member:
+            raise not_a_member_exception()
+        attrs['user'] = user
         return attrs
 
 class CheckIfUserHasPasswordResponseSerializer(serializers.Serializer):
@@ -250,25 +277,18 @@ class CheckIfUserHasPasswordResponseSerializer(serializers.Serializer):
     valid = serializers.BooleanField()
 
 class MemberLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
+    identifier = serializers.CharField(required=True, help_text="Member's email or phone number")
     password = serializers.CharField(required=True)
     def validate(self, attrs):
-        email = attrs.get('email')
+        identifier = attrs.get('identifier')
         password = attrs.get('password')
         try:
-            user = CustomUser.objects.get(email=email)
+            user = CustomUser.objects.get(resolve_member_identifier_filter(identifier))
         except CustomUser.DoesNotExist:
-            raise CustomValidationException(
-                msg="User not found",
-                code=404
-            )
+            raise not_a_member_exception()
         else:
-            print(user)
-            if user.is_superuser:
-                raise CustomValidationException(
-                    msg="You do not have permission to access this resource",
-                    code=401
-                )
+            if user.is_superuser or not user.is_member:
+                raise not_a_member_exception()
             if not check_password(password, user.password):
                 raise CustomValidationException(
                     msg="Invalid credentials provided.",
@@ -279,13 +299,14 @@ class MemberLoginSerializer(serializers.Serializer):
                 'name': user.user_name,
                 'role': 'member',
                 'email': user.email,
+                'phone_number': user.phone_number,
                 'id': user.id,
             }
             return {
                 'user': user_data,
                 'tokens': get_auth_tokens_for_user(user)
             }
-        
+
 
 class MemberLoginResponseSerializer(serializers.Serializer):
     name = serializers.CharField()
@@ -297,9 +318,9 @@ class MeSerializer(serializers.ModelSerializer):
     role = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
-        fields = ['id', 'user_name', 'email', 'role']
+        fields = ['id', 'user_name', 'email', 'phone_number', 'role', 'admin_role']
         read_only_fields = fields
-    
+
     def get_role(self, obj):
         if obj.is_superuser:
             return 'admin'
@@ -340,3 +361,88 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class LogoutResponseSerializer(serializers.Serializer):
     msg = serializers.CharField()
     valid = serializers.BooleanField()
+
+
+class AccountSearchSerializer(serializers.Serializer):
+    """
+    Fast admin-facing phone number search across all users (members,
+    non-members). Used by front-desk staff to pull up someone's
+    subscription/payment status.
+    """
+    phone_number = serializers.CharField(required=True)
+
+    def validate(self, attrs):
+        phone = normalize_phone_number(attrs.get('phone_number'))
+        user = CustomUser.objects.filter(phone_number=phone).order_by('-created_at').first()
+        if not user:
+            raise CustomValidationException(
+                msg="No user found with this phone number",
+                code=404
+            )
+        attrs['user'] = user
+        return attrs
+
+
+class AdminCreateSerializer(serializers.Serializer):
+    user_name = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True, min_length=8, write_only=True)
+    admin_role = serializers.ChoiceField(choices=CustomUser.AdminRole.choices, required=True)
+
+    def validate_email(self, value):
+        if CustomUser.objects.filter(email__iexact=value).exists():
+            raise CustomValidationException("A user with this email already exists.")
+        return value.lower()
+
+    def create(self, validated_data):
+        return CustomUser.objects.create_admin(
+            user_name=validated_data['user_name'],
+            email=validated_data['email'],
+            password=validated_data['password'],
+            admin_role=validated_data['admin_role'],
+        )
+
+
+class AdminResponseSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    user_name = serializers.CharField()
+    email = serializers.EmailField()
+    admin_role = serializers.CharField()
+    is_active = serializers.BooleanField()
+    last_login = serializers.DateTimeField(allow_null=True)
+
+
+class AdminDeactivateSerializer(serializers.Serializer):
+    admin_id = serializers.UUIDField(required=True)
+
+    def validate(self, attrs):
+        admin_id = attrs.get('admin_id')
+        request = self.context.get('request')
+        try:
+            admin = CustomUser.objects.get(id=admin_id, is_superuser=True)
+        except CustomUser.DoesNotExist:
+            raise CustomValidationException(msg="Admin not found", code=404)
+
+        if request and str(request.user.id) == str(admin.id):
+            raise CustomValidationException(msg="You cannot deactivate your own account", code=400)
+
+        if admin.admin_role == CustomUser.AdminRole.SUPER:
+            other_active_supers = CustomUser.objects.filter(
+                is_superuser=True,
+                admin_role=CustomUser.AdminRole.SUPER,
+                is_active=True,
+            ).exclude(id=admin.id)
+            if not other_active_supers.exists():
+                raise CustomValidationException(
+                    msg="At least one active Super Admin must remain",
+                    code=400
+                )
+
+        attrs['admin'] = admin
+        return attrs
+
+    def save(self):
+        admin = self.validated_data['admin']
+        admin.is_active = False
+        admin.save()
+        return admin

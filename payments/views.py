@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.db import transaction
 from helpers.responses import CustomResponse, custom_post_schema
 from accounts.permissions import IsAdminUser
 from payments.models import Plans
@@ -8,7 +9,13 @@ from payments.serializers import ConfirmPaymentSerializer, PaymentPlansSerialize
 from django.conf import settings
 from django.http import HttpResponse
 from subscription.models import Subscription
-from payments.services import handle_member_success_payment, handle_non_member_success_payment, handle_failed_payment
+from subscription.serializers import MemberSubscriptionSerializer, SubscriptionResponseSerializer
+from payments.services import (
+    handle_member_success_payment,
+    handle_non_member_success_payment,
+    handle_failed_payment,
+    record_offline_payment,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -21,18 +28,59 @@ import hashlib
 class ConfirmPaymentView(APIView):
     permission_classes = [IsAdminUser]
     serializer_class = ConfirmPaymentSerializer
-    
+
     @custom_post_schema(ConfirmPaymentSerializer, PaymentResponseSerializer, status_code=200)
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        payment = serializer.confirm_payment()     
+        payment = serializer.confirm_payment()
         return CustomResponse(
             valid=True,
             msg="Payment confirmed successfully",
             data=self.serializer_class(payment).data
         )
-    
+
+
+class RecordOfflinePaymentView(APIView):
+    """
+    Record a cash/offline payment an admin takes on a user's behalf (Staff
+    or Super Admin capability). No Paystack involved, but the resulting
+    subscription state (7-day partial / 30-day active / non-member active)
+    follows exactly the same rules as an online payment - reuses
+    MemberSubscriptionSerializer's validation so installment sequencing and
+    the one-open-subscription rule are enforced identically.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = MemberSubscriptionSerializer
+
+    @custom_post_schema(MemberSubscriptionSerializer, SubscriptionResponseSerializer, status_code=201)
+    def post(self, request):
+        data = dict(request.data)
+        data['is_admin_assigned'] = False  # this is a real (offline) payment, not a free grant
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            installment_number = serializer.validated_data.get('installment_number')
+            subscription = serializer.validated_data.get('subscription')
+            user = serializer.validated_data.get('user')
+            plan = serializer.validated_data.get('plan')
+            hours = serializer.validated_data.get('hours')
+            if subscription is None:
+                subscription = Subscription.objects.create(
+                    user=user,
+                    plan=plan,
+                    hours=hours,
+                )
+            amount = (hours * plan.price) if not plan.is_member_only else None
+            record_offline_payment(user, plan, subscription, installment_number, amount=amount)
+            subscription.refresh_from_db()
+            return CustomResponse(
+                valid=True,
+                msg="Offline payment recorded successfully",
+                status=201,
+                data=SubscriptionResponseSerializer(subscription).data
+            )
+
 
 class PaymentPlansView(APIView):
     serializer_class = PaymentPlansSerializer

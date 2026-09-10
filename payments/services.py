@@ -9,13 +9,25 @@ from django.utils import timezone
 from datetime import timedelta
 from hub_closure.models import HubClosureDate
 
-def initiate_paystack_payment(user, plan, subscription, installment_number=None):
-    paystack_reference = str(uuid.uuid4())
+def _resolve_amount(plan, installment_number, amount_override=None):
+    if amount_override is not None:
+        return amount_override
     if plan.is_paid_in_installment:
-        amount = plan.installment_price
-    else:
-        amount = plan.price
-    
+        return plan.installment_price
+    return plan.price
+
+
+def initiate_paystack_payment(user, plan, subscription, installment_number=None, amount=None):
+    """
+    Initialize a Paystack transaction for either a member subscription
+    payment or a non-member hourly booking. `amount` is required for
+    non-member bookings (hours * hourly rate, computed by the caller since
+    hours varies per booking) and optional for member plans (derived from
+    the plan's price/installment_price when not given).
+    """
+    paystack_reference = str(uuid.uuid4())
+    amount = _resolve_amount(plan, installment_number, amount)
+
     payment_type = Payment.PaymentType.MEMBER_MONTHLY if plan.is_member_only else Payment.PaymentType.NON_MEMBER_HOURLY
     payment = Payment.objects.create(
         user=user,
@@ -26,11 +38,12 @@ def initiate_paystack_payment(user, plan, subscription, installment_number=None)
         installment_number=installment_number,
         paystack_reference=paystack_reference
     )
-    print(payment)
     metadata = {
         "user_id": str(user.id),
         "subscription_id": str(subscription.id),
         "payment_id": str(payment.id),
+        "payment_type": "member" if plan.is_member_only else "non_member",
+        "installment_number": installment_number or "",
     }
     paystack_url = f"https://api.paystack.co/transaction/initialize"
     payload = {
@@ -44,6 +57,36 @@ def initiate_paystack_payment(user, plan, subscription, installment_number=None)
     }
     paystack_response = requests.post(paystack_url, headers=headers, json=payload)
     return paystack_response.json()
+
+
+def record_offline_payment(user, plan, subscription, installment_number=None, amount=None):
+    """
+    Record a cash/offline payment taken by an admin on a user's behalf.
+    Mirrors initiate_paystack_payment but skips Paystack entirely: the
+    Payment is created as already Success, and the same success handler
+    used by the webhook is invoked immediately so the resulting
+    subscription state (7-day partial / 30-day active / non-member active)
+    is identical to what an online payment would produce.
+    """
+    amount = _resolve_amount(plan, installment_number, amount)
+
+    payment = Payment.objects.create(
+        user=user,
+        subscription=subscription,
+        amount=amount,
+        payment_type=Payment.PaymentType.MEMBER_MONTHLY if plan.is_member_only else Payment.PaymentType.NON_MEMBER_HOURLY,
+        payment_status=Payment.PaymentStatus.PENDING,
+        installment_number=installment_number,
+        paystack_reference=f"offline-{uuid.uuid4()}",
+    )
+
+    if plan.is_member_only:
+        handle_member_success_payment(subscription.id, payment.id)
+    else:
+        handle_non_member_success_payment(subscription.id, payment.id)
+
+    payment.refresh_from_db()
+    return payment
 
 def handle_member_success_payment(subscription_id, payment_id):
     subscription = Subscription.objects.get(id=subscription_id)

@@ -46,12 +46,14 @@ class MemberSubscriptionView(APIView):
                 subscription = serializer.validated_data.get('subscription')
                 user = serializer.validated_data.get('user')
                 plan = serializer.validated_data.get('plan')
+                hours = serializer.validated_data.get('hours')
                 admin_assigned = serializer.validated_data.get('is_admin_assigned')
                 if subscription is None:
                     subscription = Subscription.objects.create(
                         user = user,
                         plan = plan,
                         admin_assigned = admin_assigned,
+                        hours = hours,
                     )
                 if admin_assigned:
                     subscription.admin_assigned = True
@@ -60,9 +62,10 @@ class MemberSubscriptionView(APIView):
                     return CustomResponse(valid=True,
                         msg="Subscription created successfully",
                         data=SubscriptionResponseSerializer(subscription).data)
-                    
+
                 else:
-                    paystack_response = initiate_paystack_payment(user, plan, subscription, installment_number)
+                    amount = (hours * plan.price) if not plan.is_member_only else None
+                    paystack_response = initiate_paystack_payment(user, plan, subscription, installment_number, amount=amount)
                     if paystack_response.get('status') is True:
                         data = {
                         'authorization_url' : paystack_response.get('data').get('authorization_url'),
@@ -106,8 +109,8 @@ class NonMemberSubscriptionView(APIView):
                     subscription = serializer.save()
                     user = subscription.user
                     plan = subscription.plan
-                    paystack_response = initiate_paystack_payment(user, plan, subscription)
-                    print(paystack_response)
+                    amount = subscription.hours * plan.price
+                    paystack_response = initiate_paystack_payment(user, plan, subscription, amount=amount)
                     if paystack_response.get('status') is True:
                         data = {
                         'authorization_url' : paystack_response.get('data').get('authorization_url'),

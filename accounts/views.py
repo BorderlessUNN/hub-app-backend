@@ -1,8 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework import status
 from accounts.models import CustomUser
-from helpers.responses import CustomResponse, custom_post_schema 
-from accounts.permissions import IsAdminUser
+from helpers.responses import CustomResponse, custom_post_schema
+from accounts.permissions import IsAdminUser, IsSuperAdminUser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from accounts.serializers import (
     AdminLoginSerializer,
@@ -23,6 +23,11 @@ from accounts.serializers import (
     MeSerializer,
     LogoutSerializer,
     LogoutResponseSerializer,
+    AccountSearchSerializer,
+    AdminCreateSerializer,
+    AdminResponseSerializer,
+    AdminDeactivateSerializer,
+    CustomUserSerializer,
 )
 
 
@@ -84,8 +89,11 @@ class CaptureDataHelperView(APIView):
 class CreateMemberView(CaptureDataHelperView):
     """
     API View for creating a new member.
+
+    Community members are added by an admin (Staff or Super), individually
+    or via CSV import (see MemberImport* views) - not self-service.
     """
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     serializer_class = CustomMemberCreateSerializer
     # msg = 'User created successfully'
     @custom_post_schema(CustomMemberCreateSerializer, CustomMemberCreateResponseSerializer, status_code=status.HTTP_201_CREATED)
@@ -134,7 +142,8 @@ class UserExistsView(APIView):
 
 class CheckIfUserHasPasswordView(APIView):
     """
-    API to check if a user has a password.
+    API to check if a member has a password (first-login detection for the
+    phone/password member login flow).
     """
     serializer_class = CheckIfUserHasPasswordSerializer
     permission_classes = [AllowAny]
@@ -143,22 +152,21 @@ class CheckIfUserHasPasswordView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        email = serializer.validated_data.get('email')
-        user = CustomUser.objects.get(email=email)
+        user = serializer.validated_data.get('user')
         if user.has_usable_password():
             return CustomResponse(
                 valid=True,
                 msg="User has password",
-                data=serializer.validated_data)
+                data={'has_password': True})
         else:
             return CustomResponse(
                 valid=False,
                 msg="User does not have a password",
-                data=serializer.validated_data)
+                data={'has_password': False})
 
 class SetPasswordView(APIView):
     """
-    API to set a password for a user.
+    API for a member to set their password on first login.
     """
     serializer_class = SetPasswordSerializer
     permission_classes = [AllowAny]
@@ -167,13 +175,11 @@ class SetPasswordView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        whatsapp_number = serializer.validated_data.get('whatsapp_number')
-        email = serializer.validated_data.get('email')
+        user = serializer.validated_data.get('user')
         password = serializer.validated_data.get('password')
-        user = CustomUser.objects.get(email=email)
         user.set_password(password)
         user.save()
-        
+
         return CustomResponse(
             valid=True,
             msg="Password set successfully",
@@ -217,4 +223,98 @@ class LogoutView(APIView):
         return CustomResponse(
             valid=True,
             msg="Logged out successfully",
+        )
+
+
+class AccountSearchView(APIView):
+    """
+    Fast phone-number lookup for front-desk staff (Staff or Super Admin).
+    """
+    serializer_class = AccountSearchSerializer
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        serializer = self.serializer_class(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data.get('user')
+        return CustomResponse(
+            valid=True,
+            msg="User found",
+            data=CustomUserSerializer(user).data
+        )
+
+
+class MemberListView(APIView):
+    """
+    List existing community members (any admin tier). Supports an optional
+    ?search= filter over name, email, and phone number.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        members = CustomUser.objects.filter(is_member=True, is_active=True)
+        search = request.query_params.get('search')
+        if search:
+            from django.db.models import Q
+            members = members.filter(
+                Q(user_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(phone_number__icontains=search)
+            )
+        members = members.order_by('user_name')
+        return CustomResponse(
+            valid=True,
+            msg="Members fetched successfully",
+            data=CustomUserSerializer(members, many=True).data,
+        )
+
+
+class AdminListView(APIView):
+    """ List all admin accounts (Super Admin only). """
+    permission_classes = [IsSuperAdminUser]
+
+    def get(self, request):
+        admins = CustomUser.objects.filter(is_superuser=True).order_by('user_name')
+        return CustomResponse(
+            valid=True,
+            msg="Admins fetched successfully",
+            data=AdminResponseSerializer(admins, many=True).data
+        )
+
+
+class AdminCreateView(APIView):
+    """ Create a new admin account, Staff or Super (Super Admin only). """
+    serializer_class = AdminCreateSerializer
+    permission_classes = [IsSuperAdminUser]
+
+    @custom_post_schema(AdminCreateSerializer, AdminResponseSerializer, status_code=status.HTTP_201_CREATED)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        admin = serializer.save()
+        return CustomResponse(
+            valid=True,
+            msg="Admin created successfully",
+            status=status.HTTP_201_CREATED,
+            data=AdminResponseSerializer(admin).data
+        )
+
+
+class AdminDeactivateView(APIView):
+    """
+    Deactivate an admin account (Super Admin only). Refuses to deactivate
+    yourself or the last remaining active Super Admin.
+    """
+    serializer_class = AdminDeactivateSerializer
+    permission_classes = [IsSuperAdminUser]
+
+    @custom_post_schema(AdminDeactivateSerializer, AdminResponseSerializer, status_code=status.HTTP_200_OK)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        admin = serializer.save()
+        return CustomResponse(
+            valid=True,
+            msg="Admin deactivated successfully",
+            data=AdminResponseSerializer(admin).data
         )

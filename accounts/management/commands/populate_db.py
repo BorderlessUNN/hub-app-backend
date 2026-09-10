@@ -1,12 +1,12 @@
 import os
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ValidationError
 from accounts.models import CustomUser
 from seats.models import Seat
-from payments.models import Plans
 
 class Command(BaseCommand):
-    help = "Populates the database with one admin user, seat records, and payment plans."
+    help = "Populates the database with one Super Admin user, seat records, and payment plans."
 
     def handle(self, *args, **kwargs):
         # 1. Create an admin account (optional; requires env vars)
@@ -25,8 +25,9 @@ class Command(BaseCommand):
                         user_name=admin_name,
                         email=admin_email,
                         password=admin_password,
+                        admin_role=CustomUser.AdminRole.SUPER,
                     )
-                    self.stdout.write(self.style.SUCCESS("Admin user created"))
+                    self.stdout.write(self.style.SUCCESS("Super Admin user created"))
                 else:
                     self.stdout.write(self.style.WARNING("Admin user already exists"))
             except ValidationError as e:
@@ -41,23 +42,6 @@ class Command(BaseCommand):
                 created_seats += 1
         self.stdout.write(self.style.SUCCESS(f"{created_seats} seats created"))
 
-        # 3. Create payment plans
-        plans_data = [
-            {"name": "Hourly", "price": 500, "hours": 1},
-            {"name": "Half Day", "price": 1500, "hours": 4},
-            {"name": "Full Day", "price": 3000, "hours": 8},
-        ]
-
-        created_plans = 0
-        for plan in plans_data:
-            _, created = Plans.objects.get_or_create(
-                name=plan["name"],
-                defaults={
-                    "price": plan["price"],
-                    "hours": plan["hours"]
-                }
-            )
-            if created:
-                created_plans += 1
-
-        self.stdout.write(self.style.SUCCESS(f"{created_plans} plans added"))
+        # 3. Payment plans - delegated to `seed_plans`, the single source of
+        # truth for plan pricing (see payments/management/commands/seed_plans.py).
+        call_command("seed_plans")

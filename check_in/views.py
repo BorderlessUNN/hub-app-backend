@@ -9,6 +9,7 @@ from check_in.serializers import (
     CheckInResponseSerializer,
     CheckInSerializer,
     NonMemberCheckOutSerializer,
+    ExtendNonMemberCheckInSerializer,
 )
 from helpers.responses import CustomResponse, custom_post_schema
 
@@ -47,5 +48,25 @@ class NonMemberCheckOutView(APIView):
         return CustomResponse(
             valid=True,
             msg="Check-out successful",
+            data=CheckInResponseSerializer(serializer.instance).data,
+        )
+
+
+class ExtendNonMemberCheckInView(APIView):
+    """
+    Admin-only: extend a non-member's in-progress session by additional
+    hours. Not available to non-members themselves.
+    """
+    permission_classes = [IsAdminUser]
+    serializer_class = ExtendNonMemberCheckInSerializer
+
+    @custom_post_schema(ExtendNonMemberCheckInSerializer, CheckInResponseSerializer, status_code=200)
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return CustomResponse(
+            valid=True,
+            msg="Session extended successfully",
             data=CheckInResponseSerializer(serializer.instance).data,
         )

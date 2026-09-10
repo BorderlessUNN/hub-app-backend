@@ -1,6 +1,6 @@
 from django.urls import path
 
-from check_in.views import CheckInViewSet, NonMemberCheckOutView
+from check_in.views import CheckInViewSet, NonMemberCheckOutView, ExtendNonMemberCheckInView
 
 urlpatterns = [
     path(
@@ -14,4 +14,5 @@ urlpatterns = [
         name="check-in-detail",
     ),
     path('non_member/check-out/', NonMemberCheckOutView.as_view(), name='non-member-check-out'),
+    path('non_member/extend/', ExtendNonMemberCheckInView.as_view(), name='non-member-extend'),
 ]
